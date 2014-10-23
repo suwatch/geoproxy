@@ -1,0 +1,9 @@
+[Oo]bj/
+[Bb]in/
+*.user
+*.suo
+*.csproj.user
+packages/*
+App_Data/
+msbuild.log
+nuget.exe
