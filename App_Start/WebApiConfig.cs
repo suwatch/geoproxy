@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
+using System.Web.Routing;
 
-namespace EmptyWebApi
+namespace geoproxy
 {
     public static class WebApiConfig
     {
         public static void Register(HttpConfiguration config)
         {
+            config.Routes.MapHttpRoute("subscriptions-operation", "subscriptions/{*path}", new { controller = "Operation", action = "Invoke" });
+            config.Routes.MapHttpRoute("providers-operation", "providers/{*path}", new { controller = "Operation", action = "Invoke" });
+
             config.Routes.MapHttpRoute(
                 name: "DefaultApi",
                 routeTemplate: "api/{controller}/{id}",
