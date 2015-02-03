@@ -13,6 +13,7 @@ namespace geoproxy.Controllers
 {
     public class OperationController : ApiController
     {
+        const string VersionSuffix = "-privatepreview";
         const string CurrentGeoUri = "https://geomaster.antdir0.antares-test.windows-int.net:444/";
         const string IntAppGeoUri = "https://geomaster.ant-intapp-admin.windows-int.net:444/";
 
@@ -76,12 +77,12 @@ namespace geoproxy.Controllers
                 throw new InvalidOperationException("api-version query string must contains at least 4 parts!");
             }
 
-            if (!apiVersion.EndsWith("-private", StringComparison.OrdinalIgnoreCase))
+            if (!apiVersion.EndsWith(VersionSuffix, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("api-version query string must end with '-private'!");
+                throw new InvalidOperationException("api-version query string must end with '" + VersionSuffix + "'!");
             }
 
-            query["api-version"] = apiVersion.Substring(0, apiVersion.Length - "-private".Length);
+            query["api-version"] = apiVersion.Substring(0, apiVersion.Length - VersionSuffix.Length);
 
             var stamp = query["stamp"];
             if (!String.IsNullOrEmpty(stamp))
