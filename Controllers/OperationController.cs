@@ -17,6 +17,8 @@ namespace geoproxy.Controllers
         const string CurrentGeoUri = "https://geomaster.antdir0.antares-test.windows-int.net:444/";
         const string IntAppGeoUri = "https://geomaster.ant-intapp-admin.windows-int.net:444/";
 
+
+
         [HttpGet, HttpPost, HttpPut, HttpHead, HttpPatch, HttpOptions, HttpDelete]
         public async Task<HttpResponseMessage> Invoke(HttpRequestMessage requestMessage)
         {
@@ -110,13 +112,23 @@ namespace geoproxy.Controllers
                 requestMessage.Content = null;
             }
 
-            var response = await client.SendAsync(requestMessage);
+            try
+            {
+                var response = await client.SendAsync(requestMessage);
 
-            // These header is defined by client/server policy.  Since we are forwarding, 
-            // it does not apply to the communication from this node to next.   Remove them.
-            RemoveConnectionHeaders(response.Headers);
+                // These header is defined by client/server policy.  Since we are forwarding, 
+                // it does not apply to the communication from this node to next.   Remove them.
+                RemoveConnectionHeaders(response.Headers);
 
-            return response;
+                Utils.WriteLine("{0} {1} {2}", requestMessage.Method, requestMessage.RequestUri, response.StatusCode);
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                Utils.WriteLine("{0} {1} {2}", requestMessage.Method, requestMessage.RequestUri, ex);
+                throw;
+            }
         }
 
         private static void RemoveConnectionHeaders(HttpHeaders headers)

@@ -1,26 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
+using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
-using System.Web;
 
 namespace geoproxy.Controllers
 {
     static class Utils
     {
         static X509Certificate2 _certificate;
-        const string LogFile = @"d:\home\logFiles\temp.txt";
-
-        public static void ClearLog()
-        {
-            if (File.Exists(LogFile))
-            {
-                File.Delete(LogFile);
-            }
-        }
 
         public static void WriteLine(object arg)
         {
@@ -29,7 +16,7 @@ namespace geoproxy.Controllers
 
         public static void WriteLine(string format, params object[] args)
         {
-            File.AppendAllLines(@"d:\home\logFiles\temp.txt", new[] { String.Format(DateTime.UtcNow.ToString("s") + " " + format, args) });
+            Trace.TraceError(String.Format(DateTime.UtcNow.ToString("s") + " " + format, args));
         }
 
         public static X509Certificate2 GetClientCertificate()
@@ -66,5 +53,6 @@ namespace geoproxy.Controllers
 
             return new X509Certificate2(_certificate);
         }
+
     }
 }
