@@ -17,8 +17,6 @@ namespace geoproxy.Controllers
         const string CurrentGeoUri = "https://geomaster.antdir0.antares-test.windows-int.net:444/";
         const string IntAppGeoUri = "https://geomaster.ant-intapp-admin.windows-int.net:444/";
 
-
-
         [HttpGet, HttpPost, HttpPut, HttpHead, HttpPatch, HttpOptions, HttpDelete]
         public async Task<HttpResponseMessage> Invoke(HttpRequestMessage requestMessage)
         {
