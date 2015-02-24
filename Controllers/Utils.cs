@@ -8,6 +8,7 @@ namespace geoproxy.Controllers
     static class Utils
     {
         static X509Certificate2 _certificate;
+        static string _defaultStamp;
 
         public static void WriteLine(object arg)
         {
@@ -54,5 +55,14 @@ namespace geoproxy.Controllers
             return new X509Certificate2(_certificate);
         }
 
+        public static string GetDefaultStamp()
+        {
+            if (_defaultStamp == null)
+            {
+                _defaultStamp = ConfigurationManager.AppSettings["WEBSITE_DEFAULT_STAMP"] ?? String.Empty;
+            }
+
+            return _defaultStamp;
+        }
     }
 }

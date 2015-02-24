@@ -90,6 +90,14 @@ namespace geoproxy.Controllers
                 baseUri = String.Format("https://{0}.cloudapp.net:444/", stamp);
                 query.Remove("stamp");
             }
+            else
+            {
+                var defaultStamp = Utils.GetDefaultStamp();
+                if (!String.IsNullOrEmpty(defaultStamp))
+                {
+                    baseUri = String.Format("https://{0}.cloudapp.net:444/", defaultStamp);
+                }
+            }
 
             var handler = new WebRequestHandler();
             handler.ClientCertificates.Add(Utils.GetClientCertificate());
