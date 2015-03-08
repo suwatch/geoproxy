@@ -145,6 +145,7 @@ namespace geoproxy.Controllers
                 headers.Remove(name);
             }
             headers.Remove("Connection");
+            headers.Remove("Transfer-Encoding");
         }
     }
 }
