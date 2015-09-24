@@ -13,9 +13,8 @@ namespace geoproxy.Controllers
 {
     public class OperationController : ApiController
     {
-        const string VersionSuffix = "-privatepreview";
-        const string CurrentGeoUri = "https://geomaster.antdir0.antares-test.windows-int.net:444/";
-        const string IntAppGeoUri = "https://geomaster.ant-intapp-admin.windows-int.net:444/";
+        public const string VersionSuffix = "-privatepreview";
+        public const string PPEDFGeoUri = "https://geomaster.admin-waws-ppedf.windows-int.net:444/";
 
         [HttpGet, HttpPost, HttpPut, HttpHead, HttpPatch, HttpOptions, HttpDelete]
         public async Task<HttpResponseMessage> Invoke(HttpRequestMessage requestMessage)
@@ -44,13 +43,9 @@ namespace geoproxy.Controllers
             }
 
             var baseUri = String.Empty;
-            if (referrer.Host.Equals("api-current.resources.windows-int.net", StringComparison.OrdinalIgnoreCase))
+            if (referrer.Host.Equals("api-dogfood.resources.windows-int.net", StringComparison.OrdinalIgnoreCase))
             {
-                baseUri = CurrentGeoUri;
-            }
-            else if (referrer.Host.Equals("api-dogfood.resources.windows-int.net", StringComparison.OrdinalIgnoreCase))
-            {
-                baseUri = IntAppGeoUri;
+                baseUri = PPEDFGeoUri;
             }
             else
             {
@@ -92,15 +87,20 @@ namespace geoproxy.Controllers
             }
             else
             {
-                var defaultStamp = Utils.GetDefaultStamp();
-                if (!String.IsNullOrEmpty(defaultStamp))
+                // Only request from ARMClient, we will honor WEBSITE_DEFAULT_STAMP setting
+                if (requestMessage.Headers.UserAgent != null && 
+                    requestMessage.Headers.UserAgent.Any(v => v.Product.Name.IndexOf("ARMClient", StringComparison.OrdinalIgnoreCase) >= 0))
                 {
-                    baseUri = String.Format("https://{0}.cloudapp.net:444/", defaultStamp);
+                    var defaultStamp = Utils.GetDefaultStamp();
+                    if (!String.IsNullOrEmpty(defaultStamp))
+                    {
+                        baseUri = String.Format("https://{0}.cloudapp.net:444/", defaultStamp);
+                    }
                 }
             }
 
             var handler = new WebRequestHandler();
-            handler.ClientCertificates.Add(Utils.GetClientCertificate());
+            handler.ClientCertificates.Add(Utils.GetClientCertificate(baseUri));
 
             var client = new HttpClient(handler);
             requestMessage.RequestUri = new Uri(new Uri(baseUri), uri.AbsolutePath + '?' + query);
