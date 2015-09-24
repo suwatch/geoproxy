@@ -42,22 +42,7 @@ namespace geoproxy.Controllers
                 throw new InvalidOperationException("referer header is missing!");
             }
 
-            var baseUri = String.Empty;
-            if (referrer.Host.Equals("api-dogfood.resources.windows-int.net", StringComparison.OrdinalIgnoreCase))
-            {
-                baseUri = PPEDFGeoUri;
-            }
-            else
-            {
-                throw new InvalidOperationException("referer '" + referrer + "' is invalid!");
-            }
-
-            IEnumerable<string> principalIds;
-            if (!requestMessage.Headers.TryGetValues("x-ms-client-principal-id", out principalIds))
-            {
-                throw new InvalidOperationException("x-ms-client-principal-id header is missing!");
-            }
-
+            var baseUri = PPEDFGeoUri;
             var uri = requestMessage.RequestUri;
             var query = uri.ParseQueryString();
             var apiVersion = query["api-version"];
