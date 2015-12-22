@@ -25,6 +25,8 @@ namespace geoproxy.Controllers
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Trace.TraceError(String.Format("{0} {1}, {2}", requestMessage.Method, requestMessage.RequestUri, ex.ToString()));
+
                 var response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
                 var json = new JObject();
                 json["code"] = (int)HttpStatusCode.InternalServerError;
