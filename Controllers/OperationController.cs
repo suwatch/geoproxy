@@ -38,12 +38,6 @@ namespace geoproxy.Controllers
 
         private async Task<HttpResponseMessage> InvokeInternal(HttpRequestMessage requestMessage)
         {
-            var referrer = requestMessage.Headers.Referrer;
-            if (referrer == null)
-            {
-                throw new InvalidOperationException("referer header is missing!");
-            }
-
             var baseUri = PPEDFGeoUri;
             var uri = requestMessage.RequestUri;
             var query = uri.ParseQueryString();
@@ -75,8 +69,7 @@ namespace geoproxy.Controllers
             else
             {
                 // Only request from ARMClient, we will honor WEBSITE_DEFAULT_STAMP setting
-                if (requestMessage.Headers.UserAgent != null && 
-                    requestMessage.Headers.UserAgent.Any(v => v.Product.Name.IndexOf("ARMClient", StringComparison.OrdinalIgnoreCase) >= 0))
+                if (UseDefaultStamp(requestMessage))
                 {
                     var defaultStamp = Utils.GetDefaultStamp();
                     if (!String.IsNullOrEmpty(defaultStamp))
@@ -122,6 +115,28 @@ namespace geoproxy.Controllers
                 Utils.WriteLine("{0} {1} {2}", requestMessage.Method, requestMessage.RequestUri, ex);
                 throw;
             }
+        }
+
+        private bool UseDefaultStamp(HttpRequestMessage requestMessage)
+        {
+            var agents = requestMessage.Headers.UserAgent;
+            if (agents != null)
+            {
+                // Only request from ARMClient, we will honor WEBSITE_DEFAULT_STAMP setting
+                if (agents.Any(a => a.Product.Name.IndexOf("ARMClient", StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    return true;
+                }
+
+                // Only request from template with certain subscription
+                if (requestMessage.RequestUri.AbsolutePath.IndexOf("/00e7bb72-7725-4249-8e6b-0d2632b3bfc1/", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                    agents.Any(a => a.Product.Name.IndexOf("azure-resource-manager", StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void RemoveConnectionHeaders(HttpHeaders headers)
