@@ -92,7 +92,8 @@ namespace geoproxy.Controllers
             {
                 // user certificate
                 var handler = new WebRequestHandler();
-                handler.ClientCertificates.Add(Utils.GetClientCertificate(baseUri));
+                handler.ClientCertificates.Add(Utils.GetClientCertificate(baseUri, query["certauth"]));
+                query.Remove("certauth");
                 client = new HttpClient(handler);
             }
 

@@ -21,42 +21,52 @@ namespace geoproxy.Controllers
             Trace.TraceError(String.Format(DateTime.UtcNow.ToString("s") + " " + format, args));
         }
 
-        public static X509Certificate2 GetClientCertificate(string baseUri)
+        public static X509Certificate2 GetClientCertificate(string baseUri, string thumbprint)
         {
-            var key = (baseUri == OperationController.PPEDFGeoUri) ? "PPEDF_STAMP_CERTIFICATE" : "PRIVATE_STAMP_CERTIFICATE";
+            if (String.IsNullOrEmpty(thumbprint))
+            {
+                var key = (baseUri == OperationController.PPEDFGeoUri) ? "PPEDF_STAMP_CERTIFICATE" : "PRIVATE_STAMP_CERTIFICATE";
+                thumbprint = ConfigurationManager.AppSettings[key];
+                if (String.IsNullOrEmpty(thumbprint))
+                {
+                    throw new InvalidOperationException(String.Format("AppSettings {0} is not defined!", key));
+                }
+            }
 
+            return GetClientCertificateByThumbprint(thumbprint);
+        }
+
+        public static X509Certificate2 GetClientCertificateByThumbprint(string thumbprint)
+        {
             X509Certificate2 certificate = null;
             lock (_certificates)
             {
-                if (!_certificates.TryGetValue(key, out certificate))
+                if (!_certificates.TryGetValue(thumbprint, out certificate))
                 {
-                    var thumbprint = ConfigurationManager.AppSettings[key];
-                    if (String.IsNullOrEmpty(thumbprint))
-                    {
-                        // some hard coded default for testing
-                        thumbprint = "AB1287A0C4CE358D46CE270AE9F8A1B8AA59F10F";
-                    }
-
                     X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
                     store.Open(OpenFlags.ReadOnly);
+
                     try
                     {
-                        var certCollection = store.Certificates.Find(
-                                         X509FindType.FindByThumbprint,
-                                         thumbprint,
-                                         false);
-                        if (certCollection.Count == 0)
+                        foreach (var cert in store.Certificates)
                         {
-                            throw new Exception("Cannot find client cert with '" + thumbprint + "' thumbprint!");
+                            if (cert.Thumbprint.StartsWith(thumbprint, StringComparison.OrdinalIgnoreCase))
+                            {
+                                certificate = _certificates[thumbprint] = cert;
+                                break;
+                            }
                         }
-
-                        certificate = _certificates[key] = certCollection[0];
                     }
                     finally
                     {
                         store.Close();
                     }
                 }
+            }
+
+            if (certificate == null)
+            {
+                throw new Exception("Cannot find client cert with '" + thumbprint + "' thumbprint!");
             }
 
             return new X509Certificate2(certificate);
