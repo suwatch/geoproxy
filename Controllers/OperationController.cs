@@ -79,10 +79,23 @@ namespace geoproxy.Controllers
                 }
             }
 
-            var handler = new WebRequestHandler();
-            handler.ClientCertificates.Add(Utils.GetClientCertificate(baseUri));
+            HttpClient client;
+            var useBasicAuth = query["basicauth"];
+            if (!String.IsNullOrEmpty(useBasicAuth))
+            {
+                query.Remove("basicauth");
+                client = new HttpClient();
+                var byteArray = Encoding.ASCII.GetBytes(Environment.GetEnvironmentVariable("PRIVATE_STAMP_BASICAUTH"));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            }
+            else
+            {
+                // user certificate
+                var handler = new WebRequestHandler();
+                handler.ClientCertificates.Add(Utils.GetClientCertificate(baseUri));
+                client = new HttpClient(handler);
+            }
 
-            var client = new HttpClient(handler);
             requestMessage.RequestUri = new Uri(new Uri(baseUri), uri.AbsolutePath + '?' + query);
             requestMessage.Headers.Host = null;
 
