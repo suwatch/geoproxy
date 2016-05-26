@@ -68,10 +68,19 @@ namespace geoproxy.Controllers
             }
             else
             {
-                var defaultStamp = Utils.GetDefaultStamp();
-                if (!String.IsNullOrEmpty(defaultStamp))
+                stamp = requestMessage.Headers.GetHeader("x-geoproxy-stamp");
+                if (!String.IsNullOrEmpty(stamp))
                 {
-                    baseUri = String.Format("https://{0}.cloudapp.net:444/", defaultStamp);
+                    baseUri = String.Format("https://{0}.cloudapp.net:444/", stamp);
+                    requestMessage.Headers.Remove("x-geoproxy-stamp");
+                }
+                else
+                {
+                    var defaultStamp = Utils.GetDefaultStamp();
+                    if (!String.IsNullOrEmpty(defaultStamp))
+                    {
+                        baseUri = String.Format("https://{0}.cloudapp.net:444/", defaultStamp);
+                    }
                 }
             }
 

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
+using System.Linq;
+using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 
 namespace geoproxy.Controllers
@@ -80,6 +82,16 @@ namespace geoproxy.Controllers
             }
 
             return _defaultStamp;
+        }
+
+        public static string GetHeader(this HttpHeaders headers, string name)
+        {
+            IEnumerable<string> values;
+            if (headers.TryGetValues(name, out values))
+            {
+                return values.FirstOrDefault();
+            }
+            return null;
         }
     }
 }
