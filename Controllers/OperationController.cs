@@ -97,7 +97,18 @@ namespace geoproxy.Controllers
             {
                 // user certificate
                 var handler = new WebRequestHandler();
-                handler.ClientCertificates.Add(Utils.GetClientCertificate(baseUri, query["certauth"]));
+                var stampCert = requestMessage.Headers.GetHeader("x-geoproxy-stampcert");
+                if (!String.IsNullOrEmpty(stampCert))
+                {
+                    handler.ClientCertificates.Add(Utils.GetClientCertificate(baseUri, stampCert));
+                    requestMessage.Headers.Remove("x-geoproxy-stampcert");
+                }
+                else
+                {
+                    stampCert = query["certauth"];
+                    handler.ClientCertificates.Add(Utils.GetClientCertificate(baseUri, stampCert));
+                }
+
                 query.Remove("certauth");
                 client = new HttpClient(handler);
             }
