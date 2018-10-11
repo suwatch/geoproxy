@@ -53,12 +53,14 @@ namespace geoproxy.Controllers
                 throw new InvalidOperationException("api-version query string must contains at least 4 parts!");
             }
 
-            if (!apiVersion.EndsWith(VersionSuffix, StringComparison.OrdinalIgnoreCase))
+            if (apiVersion.EndsWith(VersionSuffix, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("api-version query string must end with '" + VersionSuffix + "'!");
+                query["api-version"] = apiVersion.Substring(0, apiVersion.Length - VersionSuffix.Length);
             }
-
-            query["api-version"] = apiVersion.Substring(0, apiVersion.Length - VersionSuffix.Length);
+            else
+            {
+                query["api-version"] = apiVersion;
+            }
 
             var stamp = query["stamp"];
             if (!String.IsNullOrEmpty(stamp))
