@@ -47,12 +47,6 @@ namespace geoproxy.Controllers
                 throw new InvalidOperationException("api-version query string is missing!");
             }
 
-            var parts = apiVersion.Split('-');
-            if (parts.Length < 4)
-            {
-                throw new InvalidOperationException("api-version query string must contains at least 4 parts!");
-            }
-
             if (apiVersion.EndsWith(VersionSuffix, StringComparison.OrdinalIgnoreCase))
             {
                 query["api-version"] = apiVersion.Substring(0, apiVersion.Length - VersionSuffix.Length);
