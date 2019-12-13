@@ -10,6 +10,7 @@ namespace geoproxy.Controllers
 {
     static class Utils
     {
+        static object _lockObj = new object();
         static string _defaultStamp;
         static Dictionary<string, X509Certificate2> _certificates = new Dictionary<string, X509Certificate2>();
 
@@ -20,7 +21,10 @@ namespace geoproxy.Controllers
 
         public static void WriteLine(string format, params object[] args)
         {
-            Trace.TraceError(String.Format(DateTime.UtcNow.ToString("s") + " " + format, args));
+            lock (_lockObj)
+            {
+                Trace.TraceError(String.Format(DateTime.UtcNow.ToString("s") + " " + format, args));
+            }
         }
 
         public static X509Certificate2 GetClientCertificate(string baseUri, string thumbprint)

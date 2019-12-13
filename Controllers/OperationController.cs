@@ -112,6 +112,17 @@ namespace geoproxy.Controllers
             requestMessage.RequestUri = new Uri(new Uri(baseUri), uri.AbsolutePath + '?' + query);
             requestMessage.Headers.Host = null;
 
+            var strb = new StringBuilder();
+            strb.AppendLine();
+            strb.AppendLine("---------- Request -----------------------");
+            strb.AppendLine(string.Format("{0} {1}", requestMessage.Method, requestMessage.RequestUri));
+
+            DumpHeaders(strb, requestMessage.Headers);
+            if (requestMessage.Content != null)
+            {
+                DumpHeaders(strb, requestMessage.Content.Headers);
+            }
+
             // These header is defined by client/server policy.  Since we are forwarding, 
             // it does not apply to the communication from this node to next.   Remove them.
             RemoveConnectionHeaders(requestMessage.Headers);
@@ -127,6 +138,15 @@ namespace geoproxy.Controllers
             try
             {
                 var response = await client.SendAsync(requestMessage);
+                strb.AppendLine();
+                strb.AppendLine("---------- Response -----------------------");
+                strb.AppendLine(string.Format("StatusCode: {0}", response.StatusCode));
+
+                DumpHeaders(strb, response.Headers);
+                if (response.Content != null)
+                {
+                    DumpHeaders(strb, response.Content.Headers);
+                }
 
                 // These header is defined by client/server policy.  Since we are forwarding, 
                 // it does not apply to the communication from this node to next.   Remove them.
@@ -138,8 +158,15 @@ namespace geoproxy.Controllers
             }
             catch (Exception ex)
             {
-                Utils.WriteLine("{0} {1} {2}", requestMessage.Method, requestMessage.RequestUri, ex);
+                strb.AppendLine();
+                strb.AppendLine("---------- Response -----------------------");
+                strb.AppendLine(string.Format("Exception: {0}", ex));
                 throw;
+            }
+            finally
+            {
+                strb.AppendLine();
+                Utils.WriteLine(strb);
             }
         }
 
@@ -152,6 +179,17 @@ namespace geoproxy.Controllers
             }
             headers.Remove("Connection");
             headers.Remove("Transfer-Encoding");
+        }
+
+        private static void DumpHeaders(StringBuilder strb, HttpHeaders headers)
+        {
+            if (headers != null)
+            {
+                foreach (var header in headers)
+                {
+                    strb.AppendLine(string.Format("{0}: {1}", header.Key, string.Join(", ", header.Value)));
+                }
+            }
         }
     }
 }
