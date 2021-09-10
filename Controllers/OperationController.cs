@@ -59,7 +59,7 @@ namespace geoproxy.Controllers
             var stamp = query["stamp"];
             if (!String.IsNullOrEmpty(stamp))
             {
-                baseUri = String.Format("https://{0}.cloudapp.net:444/", stamp);
+                baseUri = GetStampBaseUri(stamp);
                 query.Remove("stamp");
             }
             else
@@ -67,7 +67,7 @@ namespace geoproxy.Controllers
                 stamp = requestMessage.Headers.GetHeader("x-geoproxy-stamp");
                 if (!String.IsNullOrEmpty(stamp))
                 {
-                    baseUri = String.Format("https://{0}.cloudapp.net:444/", stamp);
+                    baseUri = GetStampBaseUri(stamp);
                     requestMessage.Headers.Remove("x-geoproxy-stamp");
                 }
                 else
@@ -75,7 +75,7 @@ namespace geoproxy.Controllers
                     var defaultStamp = Utils.GetDefaultStamp();
                     if (!String.IsNullOrEmpty(defaultStamp))
                     {
-                        baseUri = String.Format("https://{0}.cloudapp.net:444/", defaultStamp);
+                        baseUri = GetStampBaseUri(defaultStamp);
                     }
                 }
             }
@@ -168,6 +168,26 @@ namespace geoproxy.Controllers
                 strb.AppendLine();
                 Utils.WriteLine(strb);
             }
+        }
+
+        private static string GetStampBaseUri(string stamp)
+        {
+            if (Uri.TryCreate(stamp, UriKind.Absolute, out _))
+            {
+                return stamp;
+            }
+
+            if (stamp.Contains(':'))
+            {
+                return $"https://{stamp}/";
+            }
+
+            if (stamp.Contains('.'))
+            {
+                return $"https://{stamp}:444/";
+            }
+
+            return $"https://{stamp}.cloudapp.net:444/";
         }
 
         private static void RemoveConnectionHeaders(HttpHeaders headers)
