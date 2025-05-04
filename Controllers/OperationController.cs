@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -94,7 +94,13 @@ namespace geoproxy.Controllers
                 // user certificate
                 var handler = new WebRequestHandler();
                 var stampCert = requestMessage.Headers.GetHeader("x-geoproxy-stampcert");
-                if (!String.IsNullOrEmpty(stampCert))
+                var useMSI = requestMessage.Headers.GetHeader("x-geoproxy-usemsi");
+                if (useMSI == "1" || ConfigurationManager.AppSettings["PRIVATE_STAMP_USEMSI"] == "1") 
+                {
+                    throw new NotImplementedException("TODO: support MSI");
+                    // requestMessage.Headers.Remove("x-geoproxy-usemsi");
+                }
+                else if (!String.IsNullOrEmpty(stampCert))
                 {
                     handler.ClientCertificates.Add(Utils.GetClientCertificate(baseUri, stampCert));
                     requestMessage.Headers.Remove("x-geoproxy-stampcert");
@@ -192,8 +198,11 @@ namespace geoproxy.Controllers
 
         private static void RemoveConnectionHeaders(HttpHeaders headers)
         {
+            // Per https://www.rfc-editor.org/rfc/rfc2616#section-14.10, remove incoming headers defined by Connection header as well as the Connection
+            // header itself (hop-to-hop) before forwarding.  Header name starting with x-ms-* is microsoft internal headers and, if exists in Connection header,
+            // it will not be removed (ref: MSRC 84957)
             var connection = headers is HttpRequestHeaders ? ((HttpRequestHeaders)headers).Connection : ((HttpResponseHeaders)headers).Connection;
-            foreach (var name in connection)
+            foreach (var name in connection.Where(n => !n.StartsWith("x-ms-", StringComparison.OrdinalIgnoreCase)))
             {
                 headers.Remove(name);
             }
@@ -210,6 +219,9 @@ namespace geoproxy.Controllers
                     strb.AppendLine(string.Format("{0}: {1}", header.Key, string.Join(", ", header.Value)));
                 }
             }
+
+            var connection = (headers as HttpRequestHeaders)?.Connection;
+            strb.AppendLine(string.Format("Connection: {0}", connection == null ? "<NULL>" : string.Join(", ", connection)));
         }
     }
 }

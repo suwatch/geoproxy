@@ -39,10 +39,10 @@ namespace geoproxy.Controllers
                 }
             }
 
-            return GetClientCertificateByThumbprint(thumbprint);
+            return GetClientCertificateByThumbprintOrSubjectName(thumbprint);
         }
 
-        public static X509Certificate2 GetClientCertificateByThumbprint(string thumbprint)
+        public static X509Certificate2 GetClientCertificateByThumbprintOrSubjectName(string thumbprint)
         {
             X509Certificate2 certificate = null;
             lock (_certificates)
@@ -56,7 +56,8 @@ namespace geoproxy.Controllers
                     {
                         foreach (var cert in store.Certificates)
                         {
-                            if (cert.Thumbprint.StartsWith(thumbprint, StringComparison.OrdinalIgnoreCase))
+                            if (cert.Thumbprint.Equals(thumbprint, StringComparison.OrdinalIgnoreCase)
+                                || cert.Subject.StartsWith($"CN={thumbprint}", StringComparison.OrdinalIgnoreCase))
                             {
                                 certificate = _certificates[thumbprint] = cert;
                                 break;
