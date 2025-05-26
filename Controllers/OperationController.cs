@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Net;
@@ -15,6 +17,17 @@ namespace geoproxy.Controllers
     {
         public const string VersionSuffix = "-privatepreview";
         public const string PPEDFGeoUri = "https://geomaster.admin-waws-ppedf.windows-int.net:444/";
+
+        private readonly static ConcurrentDictionary<string, MsiToken> _msiTokens = new ConcurrentDictionary<string, MsiToken>(StringComparer.OrdinalIgnoreCase);
+
+        private class MsiToken
+        {
+            public string Token { get; set; }
+            public DateTime ExpiredUtc { get; set; }
+        }
+
+        private static string _msiToken;
+        private static DateTime _msiTokenExpiredUtc;
 
         [HttpGet, HttpPost, HttpPut, HttpHead, HttpPatch, HttpOptions, HttpDelete]
         public async Task<HttpResponseMessage> Invoke(HttpRequestMessage requestMessage)
@@ -94,11 +107,11 @@ namespace geoproxy.Controllers
                 // user certificate
                 var handler = new WebRequestHandler();
                 var stampCert = requestMessage.Headers.GetHeader("x-geoproxy-stampcert");
-                var useMSI = requestMessage.Headers.GetHeader("x-geoproxy-usemsi");
-                if (useMSI == "1" || ConfigurationManager.AppSettings["PRIVATE_STAMP_USEMSI"] == "1") 
+                var stampsub = requestMessage.Headers.GetHeader("x-geoproxy-stampsub");
+                if (Guid.TryParse(stampsub, out _)) 
                 {
-                    throw new NotImplementedException("TODO: support MSI");
-                    // requestMessage.Headers.Remove("x-geoproxy-usemsi");
+                    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetGeoProxyMSIToken(stampsub));
+                    requestMessage.Headers.Remove("x-geoproxy-stampsub");
                 }
                 else if (!String.IsNullOrEmpty(stampCert))
                 {
@@ -173,6 +186,37 @@ namespace geoproxy.Controllers
             {
                 strb.AppendLine();
                 Utils.WriteLine(strb);
+            }
+        }
+
+        private static async Task<string> GetGeoProxyMSIToken(string subscription)
+        {
+            if (_msiTokens.TryGetValue(subscription, out var cached) && cached.ExpiredUtc > DateTime.UtcNow)
+            {
+                return cached.Token;
+
+            }
+            
+            // curl "%MSI_ENDPOINT%?api-version=2017-09-01&resource=https://management.core.windows.net/&clientid=d4602a24-4b93-41c1-a15d-c2230ec88cd9" -v -H "Secret: %MSI_SECRET%"
+            using (var client = new HttpClient())
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, $"{Environment.GetEnvironmentVariable("MSI_ENDPOINT")}?api-version=2017-09-01&resource=api://72f988bf-86f1-41af-91ab-2d7cd011db47/{subscription}&clientid=d4602a24-4b93-41c1-a15d-c2230ec88cd9");
+                request.Headers.TryAddWithoutValidation("Secret", Environment.GetEnvironmentVariable("MSI_SECRET"));
+                using (var response = await client.SendAsync(request))
+                {
+                    response.EnsureSuccessStatusCode();
+                    var json = await response.Content.ReadAsStringAsync();
+                    var tokenObj = JObject.Parse(json);
+                    var token = tokenObj["access_token"].ToString();
+                    _msiTokens[subscription] = new MsiToken { Token = token, ExpiredUtc = DateTime.UtcNow.AddHours(1) };
+
+                    foreach (var pair in _msiTokens.Where(kvp => kvp.Value.ExpiredUtc < DateTime.UtcNow).ToArray())
+                    {
+                        _msiTokens.TryRemove(pair.Key, out _);
+                    }
+
+                    return token;
+                }
             }
         }
 

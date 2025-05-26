@@ -1,6 +1,4 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "geoproxy", "geoproxy.csproj", "{857430D9-A239-40A7-AF25-AE3646EDA6E1}"
 EndProject
 Global
@@ -16,5 +14,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9F960FCA-6CFE-47FB-BA77-2CC23C451F38}
 	EndGlobalSection
 EndGlobal
